@@ -1,14 +1,18 @@
 import UserList from '@/components/user-list';
 import { BASE_URL } from '@/lib/config';
-import { useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { ActivityIndicator, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Colors } from '@/constants/theme';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 
-import { User } from './types';
+import { User } from '../constants/types';
 
 export default function HomeScreen() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
+  const theme = useColorScheme() ?? 'light';
+  const textColor = Colors[theme].text;
 
   const fetchUsers = async () => {
     try {
@@ -19,18 +23,43 @@ export default function HomeScreen() {
         new Promise<void>((resolve) => setTimeout(resolve, 1500)),
       ]);
       setUsers(Array.isArray(data) ? data : [data]);
-      console.log('Fetched users', data);
     } catch (e) {
       console.warn('Failed to fetch users', e);
     } finally {
       setLoading(false);
     }
   };
+
+  // Deep link handler: rnwidgets://users?action=refetch
+  useEffect(() => {
+    const handleUrl = async (incomingUrl?: string) => {
+      try {
+        const url = incomingUrl ?? (await Linking.getInitialURL());
+        if (!url) return;
+        const parsed = new URL(url);
+        if (parsed.host === 'users') {
+          const action = parsed.searchParams.get('action');
+          if (action === 'refetch') {
+            fetchUsers();
+          }
+        }
+      } catch {
+        // ignore malformed URLs
+      }
+    };
+
+    // Handle cold start
+    handleUrl();
+
+    // Handle when app is already open
+    const sub = Linking.addEventListener('url', ({ url }) => handleUrl(url));
+    return () => sub.remove();
+  }, []);
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <View style={{ flex: 1 }}>
         <View style={styles.headerRow}>
-          <Text style={styles.loadedText}>Loaded: {users.length}</Text>
+          <Text style={[styles.loadedText, { color: textColor }]}>Loaded: {users.length}</Text>
           <Pressable onPress={() => setUsers([])} disabled={users.length === 0} style={styles.clearButton}>
             <Text style={[
               styles.clearButtonText,

@@ -1,7 +1,7 @@
-import { memo } from 'react';
-import { FlatList, View, Text, StyleSheet } from 'react-native';
+import type { User } from '@/constants/types';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import type { User } from '@/app/types';
+import { memo } from 'react';
+import { FlatList, StyleSheet, Text, View } from 'react-native';
 
 interface Props {
   data: User[];
@@ -30,7 +30,7 @@ function UserCard({ item }: { item: User }) {
     { fg: '#C08400', bg: '#FBECCB' },
   ] as const;
 
-  const hash = [...item.name].reduce((acc, ch) => acc + ch.charCodeAt(0), 0);
+  const hash = [...item?.name].reduce((acc, ch) => acc + ch.charCodeAt(0), 0);
   const palette = colorPairs[hash % colorPairs.length];
 
   return (

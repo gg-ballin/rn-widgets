@@ -7,51 +7,117 @@
 
 import WidgetKit
 import SwiftUI
+import Foundation
+import AppIntents
+
+// Minimal model used by the widget
+struct WidgetUser: Codable, Identifiable {
+    var id: String { email }
+    let name: String
+    let email: String
+    let catchPhrase: String
+}
+
+// Build a deep link to open the app for a specific user (by email as stable id)
+func userDeepLink(_ user: WidgetUser) -> URL? {
+    var comps = URLComponents()
+    comps.scheme = "rnwidgets"
+    comps.host = "users"
+    comps.queryItems = [URLQueryItem(name: "user", value: user.email)]
+    return comps.url
+}
+
+// Fetch and map users from the public API
+func fetchUsers() async -> [WidgetUser] {
+    guard let url = URL(string: "https://jsonplaceholder.typicode.com/users") else { return [] }
+    do {
+        let (data, _) = try await URLSession.shared.data(from: url)
+        struct APIUser: Decodable {
+            let name: String
+            let email: String
+            let company: Company
+            struct Company: Decodable { let name: String; let catchPhrase: String }
+        }
+        let decoded = try JSONDecoder().decode([APIUser].self, from: data)
+        return decoded.map { u in
+            WidgetUser(
+                name: u.name,
+                email: u.email,
+                catchPhrase: u.company.catchPhrase
+            )
+        }
+    } catch {
+        return []
+    }
+}
 
 struct Provider: AppIntentTimelineProvider {
     func placeholder(in context: Context) -> SimpleEntry {
-        SimpleEntry(date: Date(), configuration: ConfigurationAppIntent())
+        SimpleEntry(date: Date(), configuration: ConfigurationAppIntent(), users: [])
     }
 
     func snapshot(for configuration: ConfigurationAppIntent, in context: Context) async -> SimpleEntry {
-        SimpleEntry(date: Date(), configuration: configuration)
+        let users = await fetchUsers()
+        return SimpleEntry(date: Date(), configuration: configuration, users: users)
     }
     
     func timeline(for configuration: ConfigurationAppIntent, in context: Context) async -> Timeline<SimpleEntry> {
-        var entries: [SimpleEntry] = []
-
-        // Generate a timeline consisting of five entries an hour apart, starting from the current date.
-        let currentDate = Date()
-        for hourOffset in 0 ..< 5 {
-            let entryDate = Calendar.current.date(byAdding: .hour, value: hourOffset, to: currentDate)!
-            let entry = SimpleEntry(date: entryDate, configuration: configuration)
-            entries.append(entry)
-        }
-
-        return Timeline(entries: entries, policy: .atEnd)
+        let users = await fetchUsers()
+        let now = Date()
+        let entry = SimpleEntry(date: now, configuration: configuration, users: users)
+        // Refresh every 30 minutes; adjust as needed
+        let next = Calendar.current.date(byAdding: .minute, value: 30, to: now)!
+        return Timeline(entries: [entry], policy: .after(next))
     }
-
-//    func relevances() async -> WidgetRelevances<ConfigurationAppIntent> {
-//        // Generate a list containing the contexts this widget is relevant in.
-//    }
 }
 
 struct SimpleEntry: TimelineEntry {
     let date: Date
     let configuration: ConfigurationAppIntent
+    let users: [WidgetUser]
 }
 
 struct PuzzleWidgetEntryView : View {
     var entry: Provider.Entry
-
     var body: some View {
-        VStack {
-            Text("Time:")
-            Text(entry.date, style: .time)
+      VStack(alignment: .leading, spacing: 0) {
+          HStack {
+                      Text("TOP REWARDERS")
+                          .bold()
+                          .frame(height: 8)
+                    //   Spacer()
+                  }
+                  .padding()
+            if entry.users.isEmpty {
+                Text("No users").font(.caption)
+            } else {
+                let maxItems = 3 // medium only
+                ForEach(entry.users.prefix(maxItems)) { u in
+                    if let url = userDeepLink(u) {
+                        Link(destination: url) {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(u.name).font(.system(size: 12, weight: .semibold))
+                                Text(u.email).font(.system(size: 10)).foregroundStyle(.secondary)
+                                Text(u.catchPhrase).font(.system(size: 10)).italic().foregroundStyle(.secondary)
+                            }
+                        }
+                    } else {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(u.name).font(.system(size: 12, weight: .semibold))
+                            Text(u.email).font(.system(size: 10)).foregroundStyle(.secondary)
+                            Text(u.catchPhrase).font(.system(size: 10)).italic().foregroundStyle(.secondary)
+                        }
+                    }
+                    if u.id != entry.users.prefix(maxItems).last?.id {
+                        Divider().opacity(0.2)
+                    }
+                }
+            }
 
-            Text("Favorite Emoji:")
-            Text(entry.configuration.favoriteEmoji)
         }
+        .padding(.horizontal, 5)
+        .padding(.vertical, 50)
+        
     }
 }
 
@@ -63,6 +129,7 @@ struct PuzzleWidget: Widget {
             PuzzleWidgetEntryView(entry: entry)
                 .containerBackground(.fill.tertiary, for: .widget)
         }
+        .supportedFamilies([.systemMedium, .systemLarge])
     }
 }
 
@@ -83,6 +150,17 @@ extension ConfigurationAppIntent {
 #Preview(as: .systemSmall) {
     PuzzleWidget()
 } timeline: {
-    SimpleEntry(date: .now, configuration: .smiley)
-    SimpleEntry(date: .now, configuration: .starEyes)
+    SimpleEntry(date: .now, configuration: .smiley, users: [])
+    SimpleEntry(date: .now, configuration: .starEyes, users: [])
+}
+
+// AppIntent used for refreshing the widget timeline on demand
+@available(iOS 16.0, *)
+struct RefreshUsersIntent: AppIntent {
+    static var title: LocalizedStringResource = "Refresh Users"
+
+    func perform() async throws -> some IntentResult {
+        WidgetCenter.shared.reloadTimelines(ofKind: "PuzzleWidget")
+        return .result()
+    }
 }
