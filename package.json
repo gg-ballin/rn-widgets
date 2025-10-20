@@ -5,6 +5,9 @@
   "scripts": {
     "start": "expo start",
     "reset-project": "node ./scripts/reset-project.js",
+    "prebuild": "yarn && npx expo prebuild --clean && cd ios && pod install && cd ..",
+    "pods": "cd ios && rm -f Podfile.lock && pod cache clean --all && rm -rf ~/Library/Developer/Xcode/DerivedData/* && pod install --repo-update --verbose && cd ..",
+    "de-prebuild": "node scripts/cleanup.js",
     "android": "expo run:android",
     "start:tunnel": "expo start --tunnel --port 8083",
     "ios": "expo run:ios",
