@@ -1,11 +1,11 @@
+import { CustomButton } from '@/components/Button';
 import UserList from '@/components/user-list';
-import { BASE_URL } from '@/lib/config';
-import { useEffect, useState } from 'react';
-import { ActivityIndicator, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-
+import { BASE_URL } from '@/lib/config';
+import { useEffect, useState } from 'react';
+import { Linking, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { User } from '../constants/types';
 
 export default function HomeScreen() {
@@ -60,22 +60,26 @@ export default function HomeScreen() {
       <View style={{ flex: 1 }}>
         <View style={styles.headerRow}>
           <Text style={[styles.loadedText, { color: textColor }]}>Loaded: {users.length}</Text>
-          <Pressable onPress={() => setUsers([])} disabled={users.length === 0} style={styles.clearButton}>
-            <Text style={[
+          <CustomButton 
+            title="Clear" 
+            onPress={() => setUsers([])} 
+            disabled={users.length === 0} 
+            style={styles.clearButton} 
+            textStyle={[
               styles.clearButtonText,
               users.length === 0 && styles.clearButtonTextDisabled,
-            ]}>Clear</Text>
-          </Pressable>
+          ]}/>
         </View>
         <UserList data={users} />
         <View style={styles.bottomActionContainer}>
-          <Pressable style={styles.primaryButton} onPress={fetchUsers} disabled={loading}>
-            {loading ? (
-              <ActivityIndicator color="#FFFFFF" />
-            ) : (
-              <Text style={styles.primaryButtonText}>Fetch Users</Text>
-            )}
-          </Pressable>
+          <CustomButton 
+            title="Fetch Users" 
+            onPress={fetchUsers} 
+            disabled={loading} 
+            loading={loading} 
+            style={styles.primaryButton} 
+            textStyle={styles.primaryButtonText} 
+            loaderColor={Colors[theme].background} />
         </View>
       </View>
     </SafeAreaView>
@@ -83,22 +87,6 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
-  },
   headerRow: {
     marginTop: 8,
     marginHorizontal: 16,

@@ -23,7 +23,7 @@ func userDeepLink(_ user: WidgetUser) -> URL? {
     var comps = URLComponents()
     comps.scheme = "rnwidgets"
     comps.host = "users"
-    comps.queryItems = [URLQueryItem(name: "user", value: user.email)]
+  comps.queryItems = [URLQueryItem(name: "user", value: user.email), URLQueryItem(name: "name", value: user.name), URLQueryItem(name: "catchPhrase", value: user.catchPhrase)]
     return comps.url
 }
 
@@ -85,7 +85,6 @@ struct PuzzleWidgetEntryView : View {
                       Text("TOP REWARDERS")
                           .bold()
                           .frame(height: 8)
-                    //   Spacer()
                   }
                   .padding()
             if entry.users.isEmpty {
