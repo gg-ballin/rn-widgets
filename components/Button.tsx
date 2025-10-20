@@ -33,13 +33,8 @@ export const CustomButton: React.FC<CustomButtonProps> = ({
 }) => {
   const isButtonDisabled = disabled || loading;
 
-  // 3. Lógica del Theme
   const theme = useColorScheme() ?? 'light';
   const defaultTextColor = Colors[theme].text;
-
-  // 4. Color del loader
-  // Usa el prop 'loaderColor' si se pasa uno,
-  // si no, usa el color de texto del theme
   const finalLoaderColor = loaderColor ?? defaultTextColor;
 
   return (
