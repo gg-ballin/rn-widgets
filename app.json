@@ -8,6 +8,11 @@
     "scheme": "rnwidgets",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "extra": {
+      "public": {
+        "BASE_URL": "https://jsonplaceholder.typicode.com/todos/"
+      }
+    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.gomezger.a9.rn-widgets"
