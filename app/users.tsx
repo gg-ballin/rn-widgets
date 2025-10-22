@@ -7,21 +7,21 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 export default function UsersScreen() {
   const { user, name, catchPhrase } = useLocalSearchParams();
   const router = useRouter();
-    const theme = useColorScheme() ?? 'light';
-    const defaultTextColor = Colors[theme].text;
+  const theme = useColorScheme() ?? 'light';
+  const defaultTextColor = Colors[theme].text;
   return (
     <SafeAreaView style={{ flex: 1 }}>
     <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
       <CustomButton title="Go home" onPress={() => {router.replace('/') }} style={styles.button} textStyle={styles.buttonText} />
       <Text style={{ fontSize: 18, color: defaultTextColor }}>User selected from widget:</Text>
       <View style={{ flexDirection: 'column', alignItems: 'center', padding: 16 }}>
-      <Text style={{ fontSize: 22, fontWeight: 'bold', color: defaultTextColor, textAlign: 'center', marginBottom: 12}}>
+      <Text style={[styles.text, {color: defaultTextColor}]}>
         {name}
       </Text>
-      <Text style={{ fontSize: 22, fontWeight: 'bold', color: defaultTextColor, textAlign: 'center', marginBottom: 12}}>
+      <Text style={[styles.text, {color: defaultTextColor}]}>
         {user}
       </Text>
-      <Text style={{ fontSize: 22, fontWeight: 'bold', color: defaultTextColor, textAlign: 'center', marginBottom: 12}}>
+      <Text style={[styles.text, {color: defaultTextColor}]}>
         {catchPhrase}
       </Text>
       </View>
@@ -46,6 +46,12 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
+  },
+  text: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 12,
   }
 });
  
